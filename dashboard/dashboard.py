@@ -1,6 +1,5 @@
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import seaborn as sns
 import streamlit as st
 
@@ -34,20 +33,15 @@ def create_user_hour_df(df):
 st.sidebar.image("dashboard/sepeda.jpg", use_container_width=True)
 st.sidebar.header("Filter Data")
 
-# Date Range Selection
-min_date, max_date = all_df["date"].min(), all_df["date"].max()
-
-
 # Add option for users to select which analysis to view
 analysis_option = st.sidebar.selectbox(
     "Pilih Analisis",
-    ["Tren Penggunaan per Bulan", "Pengaruh Musim dan Cuaca", "Tren Pengguna per Jam"]
+    ["Tren penggunaan bike sharing setiap tahun", "Pengaruh Musim", "Pengaruh Cuaca", "Tren Pengguna per Jam"]
 )
 
-# Filter Data
-main_df = all_df
 
 # Data Preparation
+main_df = all_df
 user_count = create_user_count_df(main_df)
 days_count = create_days_count_df(main_df)
 season = create_season_df(main_df)
@@ -58,16 +52,12 @@ user_hour = create_user_hour_df(main_df)
 st.title('Bike Sharing System Dashboard 🚴')
 
 # Conditional Analysis Display
-if analysis_option == "Tren Penggunaan per Bulan":
-    st.subheader("Tren Penggunaan per Bulan")
+if analysis_option == "Tren penggunaan bike sharing setiap tahun":
+    st.subheader("Bagaimana tren penggunaan bike sharing setiap tahun?")
     
-    # Mengonversi tahun dari 0,1 menjadi 2011,2012
     all_df["year"] = all_df["year"].map({0: 2011, 1: 2012})
-    
-    # Filter data hanya berdasarkan tahun yang dipilih
     trend_df = all_df[all_df["year"].isin([2011, 2012])].groupby(["year", "month"])['total_count'].sum().reset_index()
 
-    # Visualisasi dengan Plotly
     fig_trend = px.line(
         trend_df, 
         x="month", 
@@ -75,31 +65,26 @@ if analysis_option == "Tren Penggunaan per Bulan":
         color="year", 
         markers=True, 
         labels={"month": "Bulan", "total_count": "Jumlah Pengguna", "year": "Tahun"},
-        title="Trend Penggunaan Bike Sharing"
+        title="Tren Penggunaan Bike Sharing"
     )
-
-    # Menampilkan plot pada Streamlit
+    
     st.plotly_chart(fig_trend, use_container_width=True)
 
 
+elif analysis_option == "Pengaruh Cuaca":
+    st.subheader("Bagaimana pengaruh kondisi cuaca terhadap persentase jumlah pengguna bike sharing?")
+    fig_weather = px.pie(weather, names='cuaca', values='total_count', title='Users by Weather Condition')
+    st.plotly_chart(fig_weather, use_container_width=True)
 
-elif analysis_option == "Pengaruh Musim dan Cuaca":
-    st.subheader("Pengaruh Musim dan Cuaca")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        fig = px.pie(season, names='musim', values='total_count', title='Users by Season')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        fig = px.pie(weather, names='cuaca', values='total_count', title='Users by Weather Condition')
-        st.plotly_chart(fig, use_container_width=True)
+elif analysis_option == "Pengaruh Musim":
+    st.subheader("Bagaimana pengaruh musim terhadap persentase jumlah pengguna bike sharing?")
+    fig_season = px.pie(season, names='musim', values='total_count', title='Users by Season')
+    st.plotly_chart(fig_season, use_container_width=True)
 
 elif analysis_option == "Tren Pengguna per Jam":
-    st.subheader("Tren Pengguna per Jam")
-    
-    fig = px.line(user_hour, x="hour", y="total_count", markers=True, title="Users Per Hour")
-    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Pada jam berapa jumlah peminjaman sepeda paling tinggi?")
+    fig_hour = px.line(user_hour, x="hour", y="total_count", markers=True, title="Users Per Hour")
+    st.plotly_chart(fig_hour, use_container_width=True)
 
 # Final message
 st.write("Dashboard ini membantu menganalisis tren penggunaan bike-sharing berdasarkan waktu, musim, dan cuaca.")
