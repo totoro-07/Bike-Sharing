@@ -13,6 +13,22 @@ def load_data():
 
 all_df = load_data()
 
+# Sidebar Filters
+st.sidebar.image("dashboard/sepeda.jpg", use_container_width=True)
+st.sidebar.header("Filter Data")
+
+# Date range filter
+date_range = st.sidebar.date_input("Pilih Rentang Tanggal", [all_df["date"].min(), all_df["date"].max()])
+
+# Filter data berdasarkan rentang tanggal
+filtered_df = all_df[(all_df["date"] >= pd.to_datetime(date_range[0])) & (all_df["date"] <= pd.to_datetime(date_range[1]))]
+
+# Add option for users to select which analysis to view
+analysis_option = st.sidebar.selectbox(
+    "Pilih Analisis",
+    ["Tren penggunaan bike sharing setiap tahun", "Pengaruh Musim", "Pengaruh Cuaca", "Tren Pengguna per Jam"]
+)
+
 # Helper Functions
 def create_user_count_df(df):
     return df[['date', 'casual', 'registered', 'total_count']].groupby('date').sum().reset_index()
@@ -29,24 +45,12 @@ def create_weather_df(df):
 def create_user_hour_df(df):
     return df[['hour', 'total_count']].groupby('hour').sum().reset_index()
 
-# Sidebar Filters
-st.sidebar.image("dashboard/sepeda.jpg", use_container_width=True)
-st.sidebar.header("Filter Data")
-
-# Add option for users to select which analysis to view
-analysis_option = st.sidebar.selectbox(
-    "Pilih Analisis",
-    ["Tren penggunaan bike sharing setiap tahun", "Pengaruh Musim", "Pengaruh Cuaca", "Tren Pengguna per Jam"]
-)
-
-
 # Data Preparation
-main_df = all_df
-user_count = create_user_count_df(main_df)
-days_count = create_days_count_df(main_df)
-season = create_season_df(main_df)
-weather = create_weather_df(main_df)
-user_hour = create_user_hour_df(main_df)
+user_count = create_user_count_df(filtered_df)
+days_count = create_days_count_df(filtered_df)
+season = create_season_df(filtered_df)
+weather = create_weather_df(filtered_df)
+user_hour = create_user_hour_df(filtered_df)
 
 # Dashboard Layout
 st.title('Bike Sharing System Dashboard 🚴')
@@ -55,8 +59,8 @@ st.title('Bike Sharing System Dashboard 🚴')
 if analysis_option == "Tren penggunaan bike sharing setiap tahun":
     st.subheader("Bagaimana tren penggunaan bike sharing setiap tahun?")
     
-    all_df["year"] = all_df["year"].map({0: 2011, 1: 2012})
-    trend_df = all_df[all_df["year"].isin([2011, 2012])].groupby(["year", "month"])['total_count'].sum().reset_index()
+    filtered_df["year"] = filtered_df["year"].map({0: 2011, 1: 2012})
+    trend_df = filtered_df[filtered_df["year"].isin([2011, 2012])].groupby(["year", "month"])['total_count'].sum().reset_index()
 
     fig_trend = px.line(
         trend_df, 
@@ -69,7 +73,6 @@ if analysis_option == "Tren penggunaan bike sharing setiap tahun":
     )
     
     st.plotly_chart(fig_trend, use_container_width=True)
-
 
 elif analysis_option == "Pengaruh Cuaca":
     st.subheader("Bagaimana pengaruh kondisi cuaca terhadap persentase jumlah pengguna bike sharing?")
